@@ -1,5 +1,8 @@
 use std::{fmt, ops};
 
+#[cfg(test)]
+mod tests;
+
 #[derive(Debug, PartialEq)]
 pub struct Packet {
     pub size: i32,
