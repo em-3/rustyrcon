@@ -6,7 +6,7 @@ mod packet;
 
 pub use packet::{Packet, PacketType};
 
-pub struct RCONClient<A> {
+pub struct RconClient<A> {
     host: A,
     password: String,
     connection_input: Option<Box<dyn io::Read>>,
@@ -14,12 +14,12 @@ pub struct RCONClient<A> {
     has_authenticated: bool
 }
 
-impl<A> RCONClient<A>
+impl<A> RconClient<A>
 where
     A: net::ToSocketAddrs + Copy
 {
-    pub fn new(host: A, password: String) -> RCONClient<A> {
-        RCONClient {
+    pub fn new(host: A, password: String) -> RconClient<A> {
+        RconClient {
             host,
             password,
             connection_input: None,

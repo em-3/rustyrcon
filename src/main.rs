@@ -19,7 +19,7 @@ fn main() {
         process::exit(1);
     }
 
-    let mut client = rustyrcon::RCONClient::new(&host, password);
+    let mut client = rustyrcon::RconClient::new(&host, password);
 
     if let Err(e) = client.connect() {
         eprintln!("Could not establish a connection to the server. Error: {e}");
