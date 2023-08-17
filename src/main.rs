@@ -76,6 +76,3 @@ fn read_line_with_prompt(prompt: String, buf: &mut String) -> Result<(), Box<dyn
 fn read_line(buf: &mut String) -> Result<(), Box<dyn Error>> {
     read_line_with_prompt(String::from("> "), buf)
 }
-
-
-

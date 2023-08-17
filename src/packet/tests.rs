@@ -1,3 +1,7 @@
+use std::io::{self, Write};
+
+use byteorder::{WriteBytesExt, LittleEndian};
+
 use super::*;
 
 #[test]
@@ -74,6 +78,50 @@ fn new_packet_with_id_invalid_type() {
     assert_eq!(packet.id, id);
     assert_eq!(packet.packet_type, PacketType::InvalidType);
     assert_eq!(packet.body, String::from("Error: Invalid type"));
+}
+
+#[test]
+fn packet_into_byte_array() {
+    //Define the ID so that the bytes aren't random
+    let id = 527;
+
+    let packet = Packet::new_with_id(id, PacketType::ServerDataAuth, String::from("APassword"));
+
+    let mut buf = io::Cursor::new(Vec::new());
+
+    packet.write_to(&mut buf).unwrap();
+
+    //Prepare the expected stream state
+    let mut expected = io::Cursor::new([0 as u8; 23]);
+    expected.write_i32::<LittleEndian>(19).unwrap();
+    expected.write_i32::<LittleEndian>(id).unwrap();
+    expected.write_i32::<LittleEndian>(PacketType::ServerDataAuth.into()).unwrap();
+    expected.write_all(b"APassword").unwrap();
+    expected.write_u16::<LittleEndian>(0).unwrap();
+
+    assert_eq!(buf.get_ref(), expected.get_ref());
+}
+
+#[test]
+fn packet_from_byte_array() {
+        let id = 527;
+    
+        //Prepare a fake input stream
+        let mut buf = io::Cursor::new([0 as u8; 23]);
+        buf.write_i32::<LittleEndian>(19).unwrap();
+        buf.write_i32::<LittleEndian>(id).unwrap();
+        buf.write_i32::<LittleEndian>(PacketType::ServerDataAuth.into()).unwrap();
+        buf.write_all(b"APassword").unwrap();
+        buf.write_u16::<LittleEndian>(0).unwrap();
+
+        //Reset the buffer's position
+        buf.set_position(0);
+
+        //Read the packet
+        let packet = Packet::read_from(&mut buf).unwrap();
+
+        assert_eq!(packet.id, id);
+        assert_eq!(packet.body, String::from("APassword"));
 }
 
 #[test]

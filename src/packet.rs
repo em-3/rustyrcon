@@ -1,7 +1,9 @@
-use std::{fmt, ops};
-
 #[cfg(test)]
 mod tests;
+
+use std::{fmt, io, ops, error};
+
+use byteorder::{WriteBytesExt, ReadBytesExt, LittleEndian};
 
 #[derive(Debug, PartialEq)]
 pub struct Packet {
@@ -28,6 +30,46 @@ impl Packet {
             packet_type: packet_type,
             body
         }
+    }
+
+    pub fn read_from<T: io::Read>(buf: &mut T) -> Result<Self, Box<dyn error::Error>> {
+        //Read the length of the packet
+        let size = buf.read_i32::<LittleEndian>()?;
+
+        //Read the ID
+        let id = buf.read_i32::<LittleEndian>()?;
+
+        //Read the type
+        let packet_type = buf.read_i32::<LittleEndian>()?;
+
+        let content_size = (size - 10) as usize;
+
+        //Read the contents of the message
+        let mut contents = Vec::with_capacity(content_size);
+
+        for _ in 0..content_size {
+            contents.push(buf.read_u8()?);
+        }
+
+        //Read the two empty bytes
+        buf.read_u16::<LittleEndian>()?;
+
+        Ok(Self {
+            size, id, packet_type: PacketType::from(packet_type), body: String::from_utf8(contents)?
+        })
+    }
+
+    pub fn write_to<T: io::Write>(self, buf: &mut T) -> Result<(), Box<dyn error::Error>> {
+        //Write the contents of the packet
+        buf.write_i32::<LittleEndian>(self.size)?;
+        buf.write_i32::<LittleEndian>(self.id)?;
+        buf.write_i32::<LittleEndian>(self.packet_type.into())?;
+        buf.write_all(self.body.as_bytes())?;
+
+        //Write two empty bytes for null terminated string
+        buf.write_u16::<LittleEndian>(0)?;
+
+        Ok(())
     }
 }
 
